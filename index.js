@@ -3,7 +3,7 @@ var _ = require('lodash');
 var temporalDefaultOptions = {
   // runs the insert within the sequelize hook chain, disable
   // for increased performance
-  blocking: true 
+  blocking: true
 };
 
 var excludeAttributes = function(obj, attrsToExclude){
@@ -53,7 +53,7 @@ var Temporal = function(model, sequelize, temporalOptions){
   var excludedNames = ["name", "tableName", "sequelize", "uniqueKeys", "hasPrimaryKey", "hooks", "scopes", "instanceMethods", "defaultScope"];
   var modelOptions = excludeAttributes(model.options, excludedNames);
   var historyOptions = _.assign({}, modelOptions, historyOwnOptions);
-  
+
   // We want to delete indexes that have unique constraint
   var indexes = historyOptions.indexes;
   if(Array.isArray(indexes)){
@@ -87,16 +87,18 @@ var Temporal = function(model, sequelize, temporalOptions){
   // use `after` to be nonBlocking
   // all hooks just create a copy
   model.hook('beforeUpdate', insertHook);
+  model.hook('beforeUpsert', insertHook);
   model.hook('beforeDestroy', insertHook);
 
   model.hook('beforeBulkUpdate', insertBulkHook);
   model.hook('beforeBulkDestroy', insertBulkHook);
 
   var readOnlyHook = function(){
-    throw new Error("This is a read-only history database. You aren't allowed to modify it.");    
+    throw new Error("This is a read-only history database. You aren't allowed to modify it.");
   }
 
   modelHistory.hook('beforeUpdate', readOnlyHook);
+  modelHistory.hook('beforeUpsert', readOnlyHook);
   modelHistory.hook('beforeDestroy', readOnlyHook);
 
   return model;
